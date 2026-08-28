@@ -34,7 +34,6 @@ def inicializar_banco():
         )
         """
     )
-
     #Funciona como "Ctrl + S" ou salva, ele que grava 
     conn.commit()
     # Fecha a conexão
@@ -84,19 +83,6 @@ def adicionar_jogo(titulo, plataforma):
 
     conn.commit()
     conn.close()
-
-def excluir_jogo(titulo, plataforma):
-
-    conn = sqlite3.connect(CAMINHO_BANCO)
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "DELETE FROM jogos WHERE titulo = ? AND plataforma = ?",
-        (titulo, plataforma)
-    )
-
-    conn.commit()
-    conn.close()
     
 def marcar_como_zerado(titulo):
     conn = sqlite3.connect(CAMINHO_BANCO)
@@ -112,14 +98,59 @@ def marcar_como_zerado(titulo):
     conn.close()
     return encontrou
 
+def excluir_jogo(titulo, plataforma):
+
+    conn = sqlite3.connect(CAMINHO_BANCO)
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "DELETE FROM jogos WHERE titulo = ? AND plataforma = ?",
+        (titulo, plataforma)
+    )
+
+    conn.commit()
+    conn.close()
+
+def buscar_jogo(titulo):
+    # Busca um único jogo pelo título exato. Usada antes de editar.
+    conn = sqlite3.connect(CAMINHO_BANCO)
+    cursor = conn.cursor()
+
+    # SQL - Para atualizar Status de: jogando para zerado
+    cursor.execute("SELECT titulo, plataforma FROM jogos WHERE titulo = ?",
+    (titulo,))
+
+    # Pegar somente o exato nome que bater (Somente ele)
+    jogo = cursor.fetchone()
+
+    conn.close()
+    return jogo
+
+def atualizar_jogo(titulo_atual, novo_titulo, nova_plataforma):
+    # Função para de fato fazer a atualização
+    conn = sqlite3.connect(CAMINHO_BANCO)
+    cursor = conn.cursor()
+
+    # SQL - Para atualizar a informação no BD
+    cursor.execute("UPDATE jogos SET titulo = ?, plataforma = ? WHERE titulo = ?",(novo_titulo, nova_plataforma, titulo_atual),
+    )
+
+    #Guarda quantas loinhas foram afetadas na atualização
+    encontrou = cursor.rowcount > 0
+
+    conn.commit()
+    conn.close()
+    return encontrou
+
 def exibir_menu():
     exibir_cabecalho("GameVault")
 
     print("1. Adicionar jogo")
     print("2. Listar jogo")
     print("3. Marcar jogo como zerado")
-    print("4. Excluir jogo")
-    print("5. Sair\n")
+    print("4. Atualizar jogo")
+    print("5. Excluir jogo")
+    print("6. Sair\n")
 
 def pausar():
     input("Precione Enter para voltar ao menu...")
@@ -157,20 +188,62 @@ def main():
                 pausar()
 
         elif opcao == "4":
-            exibir_cabecalho("Excluir jogo")
-            titulo = input("Título de jogo: ")
-            plataforma = input("Plataforma: ")
-            excluir_jogo(titulo, plataforma)
-            print(f"\n'{titulo}' Excluído com sucesso")
+            exibir_cabecalho("Atualizar jogo")
+            titulo = input("Título do jogo que deseja atualizar: ")
+
+            # Localiza o jogo correto para atualizar
+            jogo = buscar_jogo(titulo)
+
+            # Buscou jogo que não existe
+            if jogo is None:
+                print(f"\n'{titulo}' Não encontrado!")
+                print("Confira se digitou corretamente.")
+            
+            else:
+                titulo_atual, plataforma_atual = jogo
+                print(f"\n Jogo encontrado: {titulo_atual} ({plataforma_atual})")
+
+                # Captura os novos títulos
+                novo_titulo = input(f"Novo título (Enter para manter)'{titulo_atual}' ):")
+
+                # Captura as novas plataformas
+                nova_plataforma = input(f"Novo plataforma (Enter para manter)'{plataforma_atual}'): ")
+
+                # Se a pessoa só apertou Enter (String vazia), mantem valor atual
+                if novo_titulo.strip() == "":
+                    novo_titulo = titulo_atual
+                if nova_plataforma.strip() == "":
+                    nova_plataforma = plataforma_atual 
+
+                # Confira a atualização
+                atualizar_jogo(titulo_atual, novo_titulo, nova_plataforma)
+                print(f"\n Novo título atualizado para: '{novo_titulo}' ({nova_plataforma}) com sucesso!")
+
             pausar()
 
         elif opcao == "5":
+            exibir_cabecalho("Excluir jogo")
+            titulo = input("Título de jogo: ")
+            plataforma = input("Plataforma: ")
+
+
+            if excluir_jogo(titulo, plataforma):
+                print(f"\n'{titulo}' Excluído com sucesso")
+
+            else:
+                print(f"\n'{titulo}' Não encontrado!")
+                print("Confira se digitou corretamente.")
+
+
+            pausar()
+
+        elif opcao == "6":
             print("Até a próxima!")
             break
 
         else:
              # Caso o usuário digite uma opção inválida. Exemplo: 9 (Não existe)
-             print("Opção Inválida! Escolha um número de 1 a 5.")
+             print("Opção Inválida! Escolha um número de 1 a 6.")
              pausar()
 
 #Fechamento da função main
