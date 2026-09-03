@@ -278,8 +278,6 @@ class Menu:
 
         self.voltar_ao_menu_principal()
 
-
-
     # Lista todos os restaurantes cadastrados, um por linha.
     def listar_restaurantes(self):
         self.exibir_subtitulo("Listando os restaurantes\n")
@@ -298,6 +296,8 @@ class Menu:
 
         self.voltar_ao_menu_principal()
 
+
+    
     # Pausa a execução esperando o usuário apertar uma tecla,
     # depois chama main() de novo para reiniciar o ciclo do menu.
     def voltar_ao_menu_principal(self):
